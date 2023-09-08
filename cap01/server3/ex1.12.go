@@ -5,10 +5,11 @@ import (
 	"image/color"
 	"image/gif"
 	"io"
+	"log"
 	"math"
 	"math/rand"
-	"os"
-	"time"
+	"net/http"
+	"strconv"
 )
 
 var palette = []color.Color{color.White, color.Black}
@@ -19,14 +20,25 @@ const (
 )
 
 func main() {
-	rand.Seed(time.Now().UTC().UnixNano())
-	lissajous(os.Stdout)
+	http.HandleFunc("/", lissajousRouter)
+	log.Fatal(http.ListenAndServe("localhost:8000", nil))
 }
-func lissajous(out io.Writer) {
+
+func lissajousRouter(w http.ResponseWriter, r *http.Request) {
+	var cycles float64
+	queryParams := r.URL.Query()
+	param := queryParams.Get("cycles")
+	if param != "" {
+		cycles, _ = strconv.ParseFloat(param, 64)
+	} else {
+		cycles = 5
+	}
+	lissajous(w, cycles)
+}
+func lissajous(out io.Writer, cycles float64) {
 	const (
-		cycles  = 5
 		res     = 0.001
-		size    = 100
+		size    = 200
 		nframes = 64
 		delay   = 8
 	)
